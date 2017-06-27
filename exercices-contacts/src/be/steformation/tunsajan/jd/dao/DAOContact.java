@@ -1,12 +1,14 @@
 package be.steformation.tunsajan.jd.dao;
 import org.springframework.jdbc.core.*;
 
+import java.util.Iterator;
 import java.util.List;
 
 import be.steformation.tunsajan.jd.beans.BeansContact;
 import be.steformation.tunsajan.jd.mapper.MapperContact;
 import be.steformation.tunsajan.jd.mapper.MapperTag;
 import be.steformations.java_data.contacts.interfaces.beans.Contact;
+import be.steformations.java_data.contacts.interfaces.beans.Country;
 import be.steformations.java_data.contacts.interfaces.beans.Tag;
 import be.steformations.java_data.contacts.interfaces.dao.ContactDao;
 
@@ -93,16 +95,55 @@ public class DAOContact implements ContactDao {
 	}
 
 	@Override
-	public be.steformations.java_data.contacts.interfaces.beans.Contact createAndSaveContact(String firstname,
-			String name, String email, String countryAbbreviation, List<String> tagValues) {
-		// TODO Auto-generated method stub
-		return null;
+	public Contact createAndSaveContact(String firstname, String name, String email, String countryAbbreviation, List<String> tagValues) {
+		Country pays=null;
+		Boolean present = true;
+		if(firstname==null ||name  == null || email == null ) return null;
+		
+		if(this.getContactByFirstnameAndName(firstname, name) !=null) return null;
+		
+			DAOCountry daoCountry = new DAOCountry(this._jdbcTemplate);
+			if( countryAbbreviation!=null){
+				pays = daoCountry.getCountryByAbbreviation(countryAbbreviation);
+				if(pays==null ) present = false;
+			}
+			if(!present) return null;
+		
+			Contact contact = null;
+
+			String sql = "insert into contacts(prenom, nom, email, pays) "
+					   + "values(?, ?, ?, ?)";
+			if(pays != null){
+				this._jdbcTemplate.update(sql, firstname, name, email, pays.getId());
+			}else{
+				this._jdbcTemplate.update(sql, firstname, name, email,null);
+			}
+			contact = this.getContactByFirstnameAndName(firstname, name);
+	
+			
+			if(tagValues == null) return contact;
+			String sqlContactTag = "insert into contacts_tags(contact, tag) "
+					   + "values(?, ?)";
+			Iterator<String> itTag= tagValues.iterator();
+			DAOTag  daoTag = new DAOTag(_jdbcTemplate);
+			while(itTag.hasNext()){
+				String tags = itTag.next();
+				Tag t = daoTag.getTagByValue(tags);
+				if(t == null){
+					t = daoTag.createAndSaveTag(tags);
+				}
+				this._jdbcTemplate.update(sqlContactTag, contact.getId(), t.getId());
+				
+			}
+		
+		return contact;
 	}
 
 	@Override
 	public boolean removeContact(int id) {
-		// TODO Auto-generated method stub
-		return false;
+		if(this.getContactById(id) == null) return false;
+		String sql = "delete from contacts where id = ?";
+		this._jdbcTemplate.update(sql, id);
+		return true;
 	}
-
 }

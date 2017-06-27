@@ -33,7 +33,7 @@ public class BeansTag implements Tag {
 		if (_value == null) {
 			if (other._value != null)
 				return false;
-		} else if (_value.equals(other._value))
+		} else if (_value.compareTo(other._value) !=0)
 			return false;
 		return true;
 	}

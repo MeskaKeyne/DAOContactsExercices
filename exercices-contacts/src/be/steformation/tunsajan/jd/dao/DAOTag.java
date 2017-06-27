@@ -37,7 +37,7 @@ public class DAOTag implements TagDao {
 	@Override
 	public Tag getTagById(int id) {
 		Tag tag = null;
-		if (id < 0) {
+		if (id > 0) {
 			String sql = "select * "
 					   + "from Tags "
 					   + "where Tags.id = (?)";
@@ -53,7 +53,7 @@ public class DAOTag implements TagDao {
 	@Override
 	public List<? extends Tag> getAllTags() {
 		List<Tag> tag = null;
-		String sql = 	"SELECT tags.id, tags.tag FROM Tags ";	
+		String sql = 	"SELECT * FROM Tags ";	
 		try {
 				MapperTag mapper = new MapperTag();
 				tag = this._jdbcTemplate.query(sql, mapper);
